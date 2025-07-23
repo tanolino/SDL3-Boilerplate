@@ -4,6 +4,8 @@ set(GAMENAME "MyGame")
 
 set(SRC_FILES
     main.c
+    images.h
+    images.c
 )
 
 #if(WIN32)
@@ -29,9 +31,9 @@ target_link_libraries(${GAMENAME} PRIVATE
     #MINIZIP::minizip
 )
 
-#target_include_directories(${GAMENAME} PRIVATE
-#    ${STB_INCLUDE}
-#)
+target_include_directories(${GAMENAME} PRIVATE
+    ${STB_INCLUDE}
+)
 
 if(NOT EMSCRIPTEN)
     install(TARGETS ${GAMENAME}
