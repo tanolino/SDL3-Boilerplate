@@ -26,7 +26,7 @@ endif()
 
 endif()
 
-project(SDL3_in_3D
+project(SDL3_Project
     LANGUAGES C
     # CXX
     VERSION "0.0.1")
