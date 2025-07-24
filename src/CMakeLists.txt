@@ -3,9 +3,11 @@ cmake_minimum_required(VERSION 3.16)
 set(GAMENAME "MyGame")
 
 set(SRC_FILES
+    main.h # only for MSVC
     main.c
-    images.h
-    images.c
+    load_externals.c
+    task.c
+    text.c
 )
 
 #if(WIN32)
@@ -33,6 +35,7 @@ target_link_libraries(${GAMENAME} PRIVATE
 
 target_include_directories(${GAMENAME} PRIVATE
     ${STB_INCLUDE}
+    ${NATE_INCLUDE}
 )
 
 if(NOT EMSCRIPTEN)

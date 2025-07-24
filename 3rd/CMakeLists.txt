@@ -26,10 +26,11 @@ set(SDL_DUMMYAUDIO OFF)
 set(SDL_DUMMYCAMERA OFF)
 set(SDL_DUMMYVIDEO OFF)
 
+message(INFO " Fetching SDL3 (this might take some time)")
 FetchContent_Declare(
     sdl
     GIT_REPOSITORY https://github.com/libsdl-org/SDL
-    GIT_TAG        c9a6709bd21750f1ad9597be21abace78c6378c9 # release 3.2.16
+    GIT_TAG        68bfcb6c5419f51104e74e72ea0f8d405a4615b0 # release 3.2.18
     GIT_PROGRESS TRUE
     EXCLUDE_FROM_ALL
 )
@@ -38,3 +39,9 @@ FetchContent_MakeAvailable(sdl)
 ### STB
 
 set(STB_INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/STB" CACHE PATH "" FORCE)
+
+### NATE
+
+add_subdirectory(NATE)
+
+
