@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/usr/bin/env bash
 
 if command -v ninja >/dev/null 2>&1
 then
@@ -23,7 +23,7 @@ if [[ "$1" == "release" ]]
 then
 	BUILD_TYPE=Release
 else
-	BUILD_TYPE=Debug
+	BUILD_TYPE=RelWithDebInfo
 fi		
 	
 cmake -G "$BUILDER" \

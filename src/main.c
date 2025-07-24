@@ -6,6 +6,10 @@
 #define NATE_DYNMEMORY_IMPLEMENTATION
 #include <nate_DynMemory.h>
 
+#define NATE_TASK_IMPLEMENTATION
+#define NATE_TASK_SDL3_THREAD
+#include <nate_Task.h>
+
 #include "main.h"
 
 // Global shared state
@@ -32,7 +36,7 @@ static Uint64 update_tick()
     return res;
 }
 
-static SDL_Texture* image;
+static SDL_Texture* image = NULL;
 
 static void s_load_image_sync(void* ptr)
 {
@@ -48,7 +52,7 @@ static void s_load_image_async(void* ptr)
     const char* file_name = (const char*)ptr;
     SDL_Surface* surface = nate_Load_ImageFile(file_name, &tmp_mem);
     if (surface) {
-        printf("successfully loaded file \"%s\"\n", file_name);
+        //printf("successfully loaded file \"%s\"\n", file_name);
         SDL_RunOnMainThread(s_load_image_sync, (void*)surface, true);    
         SDL_DestroySurface(surface);
     }
@@ -90,7 +94,7 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
 
 SDL_AppResult SDL_AppIterate(void* appstate) {
     Uint64 delta_tick = update_tick();
-    SDL_SetRenderDrawColor(nate_renderer, 200, 0, 0, 255);
+    SDL_SetRenderDrawColor(nate_renderer, 20, 20, 20, 255);
     SDL_RenderClear(nate_renderer);
 
     if (image)

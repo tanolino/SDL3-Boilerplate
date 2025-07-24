@@ -2,15 +2,10 @@ cmake_minimum_required(VERSION 3.16)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-
-if(MSVC)
 set(CMAKE_CONFIGURATION_TYPES "Release;RelWithDebInfo")
-else()
-set(CMAKE_CONFIGURATION_TYPES "Release;Debug")
-endif()
 
 # ASAN or not ASAN
-if (ON)
+if (OFF)
 
 if(MSVC)
 add_compile_options(/fsanitize=address)

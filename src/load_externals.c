@@ -7,12 +7,16 @@
 #define STBI_MAX_DIMENSIONS (1 << 14)
 #include <stb_image.h>
 
-bool nate_Load_File(const char *file_name, ByteBuffer* buffer)
+bool nate_Load_File(const char *filename, ByteBuffer* buffer)
 {
     if (!buffer) return false;
 
-    FILE* file = fopen("/home/tanolino/Bilder/SubBoy.png", "r");
-    if(!file) return false;
+    FILE* file = fopen(filename, "r");
+    if(!file) {
+
+        fprintf(stderr, "Failed to open file: %s\n", strerror(errno));
+        return false;
+    }
 
     fseek(file, 0L, SEEK_END);
     int file_size = ftell(file);
@@ -24,6 +28,8 @@ bool nate_Load_File(const char *file_name, ByteBuffer* buffer)
         fprintf(stderr, "Illegal file size: %d bytes\n", file_size);
         goto JmpFailure;
     }
+    
+    //printf("Allocate %d for file to load\n", file_size);
     if (!nate_ByteBuffer_Alloc(buffer, file_size)) {
         goto JmpFailure;
     }
@@ -74,11 +80,11 @@ SDL_Surface* nate_Load_Image(const ByteBuffer* buffer, MemoryOf3rd* stb_img_buff
     return surface;
 }
 
-SDL_Surface* nate_Load_ImageFile(const char *file_name, MemoryOf3rd* stb_img_buffer)
+SDL_Surface* nate_Load_ImageFile(const char *filename, MemoryOf3rd* stb_img_buffer)
 {
     SDL_Surface* res = NULL;
     ByteBuffer buffer = ByteBuffer0;
-    if (nate_Load_File(file_name, &buffer)) {
+    if (nate_Load_File(filename, &buffer)) {
         res = nate_Load_Image(&buffer, stb_img_buffer);
     }
     nate_ByteBuffer_Free(&buffer);

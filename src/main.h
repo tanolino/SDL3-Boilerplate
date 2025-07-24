@@ -3,7 +3,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+// For fopen errors
+#include <errno.h>
+#include <string.h>
+
 #include <nate_DynMemory.h>
+#include <nate_Task.h>
 
 // Shorthand types
 typedef uint8_t u8;
@@ -25,13 +30,4 @@ extern SDL_Surface* nate_Load_Image(const ByteBuffer* array, MemoryOf3rd* stb_im
 
 // convinience function, but ineffective if we alloc/dealloc all the time
 extern SDL_Surface* nate_Load_ImageFile(const char* file_name, MemoryOf3rd* stb_img_buffer);
-
-//----------------------- tasks (depend on ArrayBuffer)
-#define NATE_WITH_WORK_THREAD
-typedef void(*nate_Task)(void* userdata);
-extern bool nate_Task_Init();
-extern bool nate_Task_Add(nate_Task function, void* userdata);
-extern void nate_Task_Update(); // Start/Join/Manage Threads and Tasks
-extern void nate_Task_Deinit();
-
 

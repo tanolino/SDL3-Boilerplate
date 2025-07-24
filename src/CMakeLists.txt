@@ -6,7 +6,6 @@ set(SRC_FILES
     main.h # only for MSVC
     main.c
     load_externals.c
-    task.c
     text.c
 )
 
