@@ -37,11 +37,21 @@ static Uint64 update_tick()
 }
 
 static SDL_Texture* image = NULL;
+static SDL_Texture* text = NULL;
+
+typedef struct SurfaceToTexture {
+    SDL_Surface* surface;
+    SDL_Texture** texture;
+} SurfaceToTexture;
 
 static void s_load_image_sync(void* ptr)
 {
-    if (ptr)
-        image = SDL_CreateTextureFromSurface(nate_renderer, (SDL_Surface*)ptr);
+    if (!ptr) return;
+    
+    SurfaceToTexture* src = (SurfaceToTexture*)ptr;
+    if (src && src->surface && src->texture)
+        (*src->texture) = SDL_CreateTextureFromSurface(nate_renderer, src->surface);
+    free(ptr);
 }
 
 static void s_load_image_async(void* ptr)
@@ -51,12 +61,38 @@ static void s_load_image_async(void* ptr)
     MemoryOf3rd tmp_mem = MemoryOf3rd0;
     const char* file_name = (const char*)ptr;
     SDL_Surface* surface = nate_Load_ImageFile(file_name, &tmp_mem);
+    SurfaceToTexture* s_to_t = NULL;
     if (surface) {
         //printf("successfully loaded file \"%s\"\n", file_name);
-        SDL_RunOnMainThread(s_load_image_sync, (void*)surface, true);    
-        SDL_DestroySurface(surface);
+        s_to_t = (SurfaceToTexture*)malloc(sizeof(SurfaceToTexture));
+        if (s_to_t) {
+            s_to_t->surface = surface;
+            s_to_t->texture = &image;
+            SDL_RunOnMainThread(s_load_image_sync, (void*)s_to_t, true);
+            SDL_DestroySurface(surface);
+        }
     }
     nate_MemoryOf3rd_Free(&tmp_mem);
+}
+
+static void s_load_text_async(void *ptr)
+{
+    ByteBuffer tmp_mem = ByteBuffer0;
+    SDL_Surface* surface = nate_Text_Render("Das ist Text", &tmp_mem);
+    SurfaceToTexture* s_to_t = NULL;
+    if (surface) {
+        s_to_t = (SurfaceToTexture*)malloc(sizeof(SurfaceToTexture));
+        if (s_to_t) {
+            s_to_t->surface = surface;
+            s_to_t->texture = &text;
+            SDL_RunOnMainThread(s_load_image_sync, (void*)s_to_t, true);
+            SDL_DestroySurface(surface);
+        }
+    }
+    else {
+        fprintf(stderr, "Failed to create text SDL_Surface\n");
+    }
+    nate_ByteBuffer_Free(&tmp_mem);
 }
 
 /* SDL Callback functions */
@@ -84,6 +120,7 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
 
     s_last_tick = SDL_GetTicksNS();
     nate_Task_Add(s_load_image_async, "test.png");
+    nate_Task_Add(s_load_text_async, NULL);
     
     return SDL_APP_CONTINUE;
 }
@@ -97,11 +134,17 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
 
 SDL_AppResult SDL_AppIterate(void* appstate) {
     Uint64 delta_tick = update_tick();
-    SDL_SetRenderDrawColor(nate_renderer, 20, 20, 20, 255);
+    SDL_SetRenderDrawColor(nate_renderer, 200, 20, 20, 255);
     SDL_RenderClear(nate_renderer);
 
     if (image)
         SDL_RenderTexture(nate_renderer, image, NULL, NULL);
+    if (text) {
+        SDL_FRect dstrect = {0};
+        dstrect.w = text->w;
+        dstrect.h = text->h;
+        SDL_RenderTexture(nate_renderer, text, NULL, &dstrect);
+    }
     
     SDL_RenderPresent(nate_renderer);
     nate_Task_Update();
