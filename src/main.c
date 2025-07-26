@@ -79,6 +79,9 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
     if(!nate_Task_Init())
         return SDL_APP_FAILURE;
     
+    if (!nate_Text_Init())
+        return SDL_APP_FAILURE;
+
     s_last_tick = SDL_GetTicksNS();
     nate_Task_Add(s_load_image_async, "test.png");
     

@@ -1,0 +1,7 @@
+https://www.1001fonts.com/dareo-font.html
+
+Free for commercial use
+
+converted using:
+
+xxd -i dareo.regular.ttf dareo.regular.h

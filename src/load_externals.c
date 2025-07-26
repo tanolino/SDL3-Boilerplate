@@ -11,7 +11,7 @@ bool nate_Load_File(const char *filename, ByteBuffer* buffer)
 {
     if (!buffer) return false;
 
-    FILE* file = fopen(filename, "r");
+    FILE* file = fopen(filename, "rb");
     if(!file) {
 
         fprintf(stderr, "Failed to open file: %s\n", strerror(errno));

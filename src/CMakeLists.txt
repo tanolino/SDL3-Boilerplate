@@ -35,6 +35,7 @@ target_link_libraries(${GAMENAME} PRIVATE
 target_include_directories(${GAMENAME} PRIVATE
     ${STB_INCLUDE}
     ${NATE_INCLUDE}
+    ${FONT_INCLUDE}
 )
 
 if(NOT EMSCRIPTEN)
