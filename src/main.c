@@ -134,13 +134,20 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
 
 SDL_AppResult SDL_AppIterate(void* appstate) {
     Uint64 delta_tick = update_tick();
-    SDL_SetRenderDrawColor(nate_renderer, 200, 20, 20, 255);
+    SDL_SetRenderDrawColor(nate_renderer, 220, 120, 120, 255);
     SDL_RenderClear(nate_renderer);
 
     if (image)
         SDL_RenderTexture(nate_renderer, image, NULL, NULL);
     if (text) {
         SDL_FRect dstrect = {0};
+        dstrect.x = 70;
+        dstrect.y = 70;
+        dstrect.w = text->w + 6;
+        dstrect.h = text->h + 6;
+        SDL_RenderFillRect(nate_renderer, &dstrect);
+        dstrect.x += 3;
+        dstrect.y += 3;
         dstrect.w = text->w;
         dstrect.h = text->h;
         SDL_RenderTexture(nate_renderer, text, NULL, &dstrect);
