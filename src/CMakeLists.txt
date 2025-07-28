@@ -7,6 +7,7 @@ set(SRC_FILES
     main.c
     load_externals.c
     text.c
+    header_only_include.c
 )
 
 #if(WIN32)
@@ -34,6 +35,7 @@ target_link_libraries(${GAMENAME} PRIVATE
 
 target_include_directories(${GAMENAME} PRIVATE
     ${STB_INCLUDE}
+    ${JSMN_INCLUDE}
     ${NATE_INCLUDE}
     ${FONT_INCLUDE}
 )

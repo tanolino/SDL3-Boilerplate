@@ -7,7 +7,7 @@ set(BUILD_SHARED_LIBS OFF)
 
 # Deactivate Subsystems
 set(SDL_DIALOG OFF) # We don't need a File Open Dialog yet
-#set(SDL_GPU OFF) # Not yet
+set(SDL_GPU OFF) # Not yet
 set(SDL_HAPTIC OFF) # Not yet
 set(SDL_POWER OFF)
 set(SDL_SENSOR OFF)
@@ -31,10 +31,22 @@ FetchContent_Declare(
     sdl
     GIT_REPOSITORY https://github.com/libsdl-org/SDL
     GIT_TAG        68bfcb6c5419f51104e74e72ea0f8d405a4615b0 # release 3.2.18
-    GIT_PROGRESS TRUE
+    GIT_PROGRESS   TRUE
     EXCLUDE_FROM_ALL
 )
 FetchContent_MakeAvailable(sdl)
+
+### jsmn
+
+message(INFO " Fetching jsmn (this might take some time)")
+FetchContent_Declare(
+    jsmn
+    GIT_REPOSITORY https://github.com/zserge/jsmn
+    GIT_TAG        25647e692c7906b96ffd2b05ca54c097948e879c
+    GIT_PROGRESS   TRUE
+)
+FetchContent_Populate(jsmn)
+set(JSMN_INCLUDE "${jsmn_SOURCE_DIR}" CACHE PATH "" FORCE)
 
 ### STB
 
