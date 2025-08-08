@@ -7,7 +7,7 @@
 #define STBI_MAX_DIMENSIONS (1 << 14)
 #include <stb_image.h>
 
-bool nate_Load_File(const char *filename, ByteBuffer* buffer)
+bool nate_Load_File(const char *filename, nate_ByteBuffer* buffer)
 {
     if (!buffer) return false;
 
@@ -49,7 +49,7 @@ bool nate_Load_File(const char *filename, ByteBuffer* buffer)
     return false;
 }
 
-SDL_Surface* nate_Load_Image(const ByteBuffer* buffer, MemoryOf3rd* stb_img_buffer)
+SDL_Surface* nate_Load_Image(const nate_ByteBuffer* buffer, nate_MemoryOf3rd* stb_img_buffer)
 {
     SDL_Surface* surface = NULL;
     if (!buffer || !buffer->data || !buffer->size) return surface;
@@ -80,13 +80,11 @@ SDL_Surface* nate_Load_Image(const ByteBuffer* buffer, MemoryOf3rd* stb_img_buff
     return surface;
 }
 
-SDL_Surface* nate_Load_ImageFile(const char *filename, MemoryOf3rd* stb_img_buffer)
+void nate_Load_Texture(nate_LoadTextureContext* context)
 {
-    SDL_Surface* res = NULL;
-    ByteBuffer buffer = ByteBuffer0;
-    if (nate_Load_File(filename, &buffer)) {
-        res = nate_Load_Image(&buffer, stb_img_buffer);
-    }
-    nate_ByteBuffer_Free(&buffer);
-    return res;
+    if (!context || !context->result || !context->surface)
+        return;
+
+    (*context->result) = SDL_CreateTextureFromSurface(nate_renderer, context->surface);
 }
+

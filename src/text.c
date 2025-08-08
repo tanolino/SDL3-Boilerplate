@@ -52,18 +52,22 @@ static size_t s_final_text_width_unscaled(const char* text, nate_FontExt* f)
 {
     size_t res = 0;
     int adv = 0, bear = 0;
+    bool first = true;
     
     if (!text) return res;
     while(*text != '\0')
     {
         stbtt_GetCodepointHMetrics(&f->info, *text, &adv, &bear);
+        if (first && adv < 0)
+            adv = -adv;
         res += adv + bear;
         text++;
+        first = false;
     }
     return res;
 }
 
-typedef struct PrintOneChar {
+typedef struct nate_PrintOneCharTag {
     unsigned char* tmp;
     size_t tmp_width;
     size_t tmp_height;
@@ -72,14 +76,14 @@ typedef struct PrintOneChar {
     size_t out_width;
     size_t h_offset;
     nate_FontExt* font;
-} PrintOneChar;
+} nate_PrintOneChar;
 
-static void s_plot_one_char_inner(const char c, PrintOneChar* d)
+static void s_plot_one_char_inner(const char c, nate_PrintOneChar* d)
 {
     int x0 = 0, x1 = 0, y0 = 0, y1 = 0;
     stbtt_GetCodepointBitmapBox(&d->font->info, c, 1.f, 1.f, &x0, &y0, &x1, &y1);
     
-    float h_subpixel = d->font->scale * (d->h_offset+ x0);
+    float h_subpixel = d->font->scale * (d->h_offset + x0);
     int h_shift = (int)h_subpixel;
     h_subpixel -= h_shift;
 
@@ -120,16 +124,18 @@ static void s_plot_one_char_inner(const char c, PrintOneChar* d)
     }
 }
 
-static void s_plot_one_char(const char c, PrintOneChar* d)
+static void s_plot_one_char(const char c, nate_PrintOneChar* d)
 {
     int x0 = 0, x1 = 0, y0 = 0, y1 = 0, adv = 0, bear = 0;
     stbtt_GetCodepointHMetrics(&d->font->info, c, &adv, &bear);
+    if (bear < 0 && d->h_offset < -bear)
+        bear = - bear;
     d->h_offset += bear;
     s_plot_one_char_inner(c, d);   
     d->h_offset += adv;
 }
 
-static SDL_Surface* s_text_render(const char* text, ByteBuffer* buffer, nate_FontExt* font)
+static SDL_Surface* s_text_render(const char* text, nate_ByteBuffer* buffer, nate_FontExt* font)
 {
     if (!font) return NULL;
     
@@ -154,7 +160,7 @@ static SDL_Surface* s_text_render(const char* text, ByteBuffer* buffer, nate_Fon
         return NULL;
     }
 
-    PrintOneChar printOneChar = {
+    nate_PrintOneChar printOneChar = {
         .tmp = tmpbuff,
         .tmp_width = font->max_width,
         .tmp_height = font->max_height,
@@ -164,10 +170,10 @@ static SDL_Surface* s_text_render(const char* text, ByteBuffer* buffer, nate_Fon
         .h_offset = 0,
         .font = font,
     };
-    size_t h_offset = 0;
-    while(*text != '\0') {
-        s_plot_one_char(*text, &printOneChar);
-        text++;
+    t = text;
+    while(*t != '\0') {
+        s_plot_one_char(*t, &printOneChar);
+        t++;
     }
     free(tmpbuff);
 
@@ -175,7 +181,7 @@ static SDL_Surface* s_text_render(const char* text, ByteBuffer* buffer, nate_Fon
                                  SDL_PIXELFORMAT_RGBA32, buffer->data, final_width * 4);
 }
 
-SDL_Surface* nate_Text_Render(const char* text, ByteBuffer* buffer)
+SDL_Surface* nate_Text_Render(const char* text, nate_ByteBuffer* buffer)
 {
     if (!text || !buffer)
         return NULL;
@@ -183,3 +189,12 @@ SDL_Surface* nate_Text_Render(const char* text, ByteBuffer* buffer)
         return s_text_render(text, buffer, &s_font_default);
 }
 
+SDL_Surface* nate_Text_Render_Sized(const char* text, nate_ByteBuffer* buffer, float size)
+{
+    if (!text || !buffer)
+        return NULL;
+    
+    struct nate_FontExt nu = s_font_default;
+    s_set_font_size(size, &nu);
+    return s_text_render(text, buffer, &nu);
+}

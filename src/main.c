@@ -28,62 +28,37 @@ static Uint64 update_tick()
     return res;
 }
 
+static nate_ByteBuffer tmp_mem = nate_ByteBuffer0;
 static SDL_Texture* image = NULL;
 static SDL_Texture* text = NULL;
 static float text_x = 70.f, text_y = 70.f;
 
-typedef struct SurfaceToTexture {
-    SDL_Surface* surface;
-    SDL_Texture** texture;
-} SurfaceToTexture;
-
-static void s_load_image_sync(void* ptr)
+static void s_load_textures()
 {
-    if (!ptr) return;
-    
-    SurfaceToTexture* src = (SurfaceToTexture*)ptr;
-    if (src && src->surface && src->texture)
-        (*src->texture) = SDL_CreateTextureFromSurface(nate_renderer, src->surface);
-    free(ptr);
-}
-
-static void s_load_image_async(void* ptr)
-{
-    if (!ptr) return;
-
-    MemoryOf3rd tmp_mem = MemoryOf3rd0;
-    const char* file_name = (const char*)ptr;
-    SDL_Surface* surface = nate_Load_ImageFile(file_name, &tmp_mem);
-    SurfaceToTexture* s_to_t = NULL;
-    if (surface) {
-        //printf("successfully loaded file \"%s\"\n", file_name);
-        s_to_t = (SurfaceToTexture*)malloc(sizeof(SurfaceToTexture));
-        if (s_to_t) {
-            s_to_t->surface = surface;
-            s_to_t->texture = &image;
-            SDL_RunOnMainThread(s_load_image_sync, (void*)s_to_t, true);
-            SDL_DestroySurface(surface);
-        }
-    }
-    nate_MemoryOf3rd_Free(&tmp_mem);
-}
-
-static void s_load_text_async(void *ptr)
-{
-    ByteBuffer tmp_mem = ByteBuffer0;
     SDL_Surface* surface = nate_Text_Render("Das ist Text", &tmp_mem);
-    SurfaceToTexture* s_to_t = NULL;
     if (surface) {
-        s_to_t = (SurfaceToTexture*)malloc(sizeof(SurfaceToTexture));
-        if (s_to_t) {
-            s_to_t->surface = surface;
-            s_to_t->texture = &text;
-            SDL_RunOnMainThread(s_load_image_sync, (void*)s_to_t, true);
+        nate_LoadTextureContext ctx = {0};
+        ctx.surface = surface;
+        ctx.result = &text;
+        SDL_RunOnMainThread((SDL_MainThreadCallback)nate_Load_Texture, (void*)&ctx, true);
+        SDL_DestroySurface(surface);
+    }
+    else {
+        fprintf(stderr, "Failed to create text SDL_Surface\n");
+    }
+    
+    if (nate_Load_File("test.png", &tmp_mem)){
+        nate_MemoryOf3rd rdmem = nate_MemoryOf3rd0;
+        if ((surface = nate_Load_Image(&tmp_mem,  &rdmem)) != NULL) {
+            nate_LoadTextureContext ctx = {0};
+            ctx.surface = surface;
+            ctx.result = &image;
+            SDL_RunOnMainThread((SDL_MainThreadCallback)nate_Load_Texture, (void*)&ctx, true);
             SDL_DestroySurface(surface);
         }
     }
     else {
-        fprintf(stderr, "Failed to create text SDL_Surface\n");
+        fprintf(stderr, "Failed to load test.png .\n");
     }
     nate_ByteBuffer_Free(&tmp_mem);
 }
@@ -104,18 +79,15 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
     if (!nate_renderer)
         return nate_SDL_GetError("SDL_CreateRenderer(...)");
     SDL_SetRenderVSync(nate_renderer, 1);
-
-    if(!nate_Task_Init())
-        return SDL_APP_FAILURE;
     
     if (!nate_Text_Init())
         return SDL_APP_FAILURE;
+    s_load_textures();
 
     s_last_tick = SDL_GetTicksNS();
-    nate_Task_Add(s_load_image_async, "test.png");
-    nate_Task_Add(s_load_text_async, NULL);
     
-    return SDL_APP_CONTINUE;
+    // return SDL_APP_CONTINUE;
+    return game_Init();
 }
 
 SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
@@ -127,11 +99,12 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
 	    text_y = event->motion.y;
     }
 
-    return SDL_APP_CONTINUE;
+    // return SDL_APP_CONTINUE;
+    return game_Event(event);
 }
 
 SDL_AppResult SDL_AppIterate(void* appstate) {
-    Uint64 delta_tick = update_tick();
+    Uint64 delta_ticks = update_tick();
     SDL_SetRenderDrawColor(nate_renderer, 220, 120, 120, 255);
     SDL_RenderClear(nate_renderer);
 
@@ -150,14 +123,13 @@ SDL_AppResult SDL_AppIterate(void* appstate) {
         dstrect.h = text->h;
         SDL_RenderTexture(nate_renderer, text, NULL, &dstrect);
     }
-    
+
+    const SDL_AppResult res = game_Iterate(delta_ticks);
     SDL_RenderPresent(nate_renderer);
-    nate_Task_Update();
-    return SDL_APP_CONTINUE;
+    return res; // SDL_APP_CONTINUE;
 }
 
 void SDL_AppQuit(void* appstate, SDL_AppResult result) {
-    nate_Task_Deinit();
     if (image)
         SDL_DestroyTexture(image);
     if (nate_renderer)

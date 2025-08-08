@@ -16,41 +16,41 @@ by Nathanael Krauße
 #define _NATE_DYNMEMORY_HEADER
 #include <stdlib.h>
 
-typedef struct ByteBufferTag {
+typedef struct nate_ByteBufferTag {
     char* data;
     size_t size;
     size_t allocated;
-} ByteBuffer;
-#define ByteBuffer0 (ByteBuffer){0};
+} nate_ByteBuffer;
+#define nate_ByteBuffer0 (nate_ByteBuffer){0};
 
 // Reuses allocated memory if sufficient, returns 1 on success and 0 on failure
-extern int nate_ByteBuffer_Alloc(ByteBuffer* buffer, size_t size);
-extern void nate_ByteBuffer_Free(ByteBuffer* buffer);
+extern int nate_ByteBuffer_Alloc(nate_ByteBuffer* buffer, size_t size);
+extern void nate_ByteBuffer_Free(nate_ByteBuffer* buffer);
 
-typedef struct ArrayBufferTag {
+typedef struct nate_ArrayBufferTag {
     void* data;
     size_t size;
     size_t allocated;
-} ArrayBuffer;
-#define ArrayBuffer0 (ArrayBuffer){0};
+} nate_ArrayBuffer;
+#define nate_ArrayBuffer0 (nate_ArrayBuffer){0};
 
 // Reuses allocated memory if sufficient, returns 1 on succes and 0 on failure
-extern int nate_ArrayBuffer_Alloc(ArrayBuffer* buffer, size_t elem_size, size_t size);
-extern void nate_ArrayBuffer_Free(ArrayBuffer* buffer);
+extern int nate_ArrayBuffer_Alloc(nate_ArrayBuffer* buffer, size_t elem_size, size_t size);
+extern void nate_ArrayBuffer_Free(nate_ArrayBuffer* buffer);
 
-typedef struct MemoryOf3rdTag {
+typedef struct nate_MemoryOf3rdTag {
     void* data;
     void (*free_fn)(void*);
-} MemoryOf3rd;
-#define MemoryOf3rd0 (MemoryOf3rd){0};
+} nate_MemoryOf3rd;
+#define nate_MemoryOf3rd0 (nate_MemoryOf3rd){0};
 
-extern void nate_MemoryOf3rd_Free(MemoryOf3rd* memory);
+extern void nate_MemoryOf3rd_Free(nate_MemoryOf3rd* memory);
 
 //------------------- Impl
 
 #ifdef NATE_DYNMEMORY_IMPLEMENTATION
 
-int nate_ByteBuffer_Alloc(ByteBuffer *buffer, size_t size)
+int nate_ByteBuffer_Alloc(nate_ByteBuffer *buffer, size_t size)
 {
     if (!buffer) return 0;
     // We have enough
@@ -70,7 +70,7 @@ int nate_ByteBuffer_Alloc(ByteBuffer *buffer, size_t size)
     return 1;
 }
 
-void nate_ByteBuffer_Free(ByteBuffer* buffer)
+void nate_ByteBuffer_Free(nate_ByteBuffer* buffer)
 {
     if (!buffer) return;
     if (!buffer->data) return;
@@ -80,7 +80,7 @@ void nate_ByteBuffer_Free(ByteBuffer* buffer)
     buffer->size = 0;
 }
 
-int nate_ArrayBuffer_Alloc(ArrayBuffer* buffer, size_t elem_size, size_t size)
+int nate_ArrayBuffer_Alloc(nate_ArrayBuffer* buffer, size_t elem_size, size_t size)
 {
     if (!buffer) return 0;
     if (buffer->allocated >= size) {
@@ -99,7 +99,7 @@ int nate_ArrayBuffer_Alloc(ArrayBuffer* buffer, size_t elem_size, size_t size)
     return 1;
 }
 
-void nate_ArrayBuffer_Free(ArrayBuffer* buffer)
+void nate_ArrayBuffer_Free(nate_ArrayBuffer* buffer)
 {
     if (!buffer) return;
     if (!buffer->data) return;
@@ -109,7 +109,7 @@ void nate_ArrayBuffer_Free(ArrayBuffer* buffer)
     buffer->size = 0;
 }
 
-void nate_MemoryOf3rd_Free(MemoryOf3rd* memory)
+void nate_MemoryOf3rd_Free(nate_MemoryOf3rd* memory)
 {
     if (!memory) return;
     if (!memory->data) return;

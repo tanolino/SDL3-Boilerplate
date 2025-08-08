@@ -8,6 +8,8 @@ set(SRC_FILES
     load_externals.c
     text.c
     header_only_include.c
+    game.h # only for MSVC
+    game.c
 )
 
 #if(WIN32)
