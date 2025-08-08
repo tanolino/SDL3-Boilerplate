@@ -30,6 +30,7 @@ static Uint64 update_tick()
 
 static SDL_Texture* image = NULL;
 static SDL_Texture* text = NULL;
+static float text_x = 70.f, text_y = 70.f;
 
 typedef struct SurfaceToTexture {
     SDL_Surface* surface;
@@ -118,8 +119,13 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[]) {
 }
 
 SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
-    if (event->type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
-        return SDL_APP_SUCCESS;
+    switch (event->type) {
+        case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+            return SDL_APP_SUCCESS;
+	case SDL_EVENT_MOUSE_MOTION:
+	    text_x = event->motion.x;
+	    text_y = event->motion.y;
+    }
 
     return SDL_APP_CONTINUE;
 }
@@ -133,8 +139,8 @@ SDL_AppResult SDL_AppIterate(void* appstate) {
         SDL_RenderTexture(nate_renderer, image, NULL, NULL);
     if (text) {
         SDL_FRect dstrect = {0};
-        dstrect.x = 70;
-        dstrect.y = 70;
+        dstrect.x = text_x;
+        dstrect.y = text_y;
         dstrect.w = text->w + 6;
         dstrect.h = text->h + 6;
         SDL_RenderFillRect(nate_renderer, &dstrect);
