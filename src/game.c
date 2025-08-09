@@ -1,70 +1,80 @@
+#include "main.h"
 #include "game.h"
 
-#define s_card_verts_len 4
+#define s_card_verts_len 5
 static SDL_Vertex s_card_verts[s_card_verts_len] = { 0 };
-static int s_card_index[] = {0, 1, 2, 2, 3, 0};
+static float s_card_texcoords_front[s_card_verts_len * 2] = {
+    0.25f, 0.5f,
+    0.0f, 0.0f,
+    0.5f, 0.0f,
+    0.5f, 1.0f,
+    0.0f, 1.0f
+};
+static float s_card_texcoords_back[s_card_verts_len * 2] = {
+    0.75f, 0.5f,
+    0.5f, 0.0f,
+    1.0f, 0.0f,
+    1.0f, 1.0f,
+    0.5f, 1.0f
+};
+static uint8_t s_card_index[] = {
+    0, 1, 2,
+    0, 2, 3,
+    0, 3, 4,
+    0, 4, 1
+};
 
 static SDL_Texture* s_card_texture = NULL;
 
-static void s_draw_card()
+static void s_draw_card(const game_Card* card)
 {
-    SDL_RenderGeometry(nate_renderer, s_card_texture,
-                       s_card_verts, s_card_verts_len,
-                       s_card_index, sizeof(s_card_index) / sizeof(int));
-    SDL_SetRenderDrawColor(nate_renderer, 10, 10, 10, 0);
-}
-
-static void s_configure_card(float pos_x, float pos_y, float rotat)
-{
-    // Position values
-    float xComp = 200.f * (rotat - 0.5f);
-    float xL = pos_x + xComp;
-    float xR = pos_x - xComp;
-    s_card_verts[0].position.x = xL;
-    s_card_verts[1].position.x = xR;
-    s_card_verts[2].position.x = xR;
-    s_card_verts[3].position.x = xL;
+    float h_flip_val = card->rotation - 0.5f;
+    float left = card->x + CARD_WIDTH * card->scale * h_flip_val;
+    float right = card->x - CARD_WIDTH * card->scale * h_flip_val;
+    float up = card->y - CARD_HEIGHT * card->scale / 2.f;
+    float down = card->y + CARD_HEIGHT * card->scale / 2.f;
+    float v_flip_val = h_flip_val * 2.f;
+    v_flip_val *= v_flip_val;
+    v_flip_val = 1.f - v_flip_val;
+    v_flip_val *= card->scale * (CARD_HEIGHT / 10.f);
+    float h_center_correction = h_flip_val * 4.f;
+    if (h_center_correction < 0.f)
+        h_center_correction = -h_center_correction;
+    if (h_center_correction > 1.f)
+        h_center_correction = 2.f - h_center_correction;
+    h_center_correction *= card->scale * (CARD_WIDTH / 20.f);
+    float card_verts[s_card_verts_len * 2] = {
+        card->x + h_center_correction, card->y,
+        left, up + v_flip_val,
+        right, up - v_flip_val,
+        right, down + v_flip_val,
+        left, down - v_flip_val
+    };
+    SDL_FColor card_colors[s_card_verts_len] = {0};
+    float mod = h_flip_val * 2.f;
+    mod *= mod;
+    mod *= card->highlight * 0.3f + 0.7f;
+    for (int i = 0; i < s_card_verts_len; i++) {
+        card_colors[i].r = mod;
+        card_colors[i].g = mod;
+        card_colors[i].b = mod;
+        card_colors[i].a = 1.f;
+    }
     
-    float yU = pos_y + 160.f;
-    float yL = pos_y - 160.f;
-    float rearOff = (rotat - 0.5f) * 2;
-    rearOff *= rearOff;
-    rearOff = 1.f - rearOff;
-    rearOff *= 30.f;
-    s_card_verts[0].position.y = yU;
-    s_card_verts[1].position.y = yU - rearOff;
-    s_card_verts[2].position.y = yL + rearOff;
-    s_card_verts[3].position.y = yL;
-
-    // Texture coordinated
-    if (rotat > 0.5f) {
-        s_card_verts[0].tex_coord.x = 0.5f;
-        s_card_verts[1].tex_coord.x = 1.0f;
-        s_card_verts[2].tex_coord.x = 1.0f;
-        s_card_verts[3].tex_coord.x = 0.5f;
+    bool result = SDL_RenderGeometryRaw(nate_renderer, s_card_texture,
+       card_verts, sizeof(float) * 2,
+       card_colors, sizeof(SDL_FColor),
+       (card->rotation < 0.5f) ? s_card_texcoords_front : s_card_texcoords_back , sizeof(float) * 2,
+       s_card_verts_len,
+       s_card_index, sizeof(s_card_index) / sizeof(uint8_t), sizeof(uint8_t)
+    );
+    if (!result) {
+        nate_SDL_GetError("SDL_RenderGeometryRaw()");
     }
-    else {
-        s_card_verts[0].tex_coord.x = 0.0f;
-        s_card_verts[1].tex_coord.x = 0.5f;
-        s_card_verts[2].tex_coord.x = 0.5f;
-        s_card_verts[3].tex_coord.x = 0.0f;
-    }
-    s_card_verts[0].tex_coord.y = 0.f;
-    s_card_verts[1].tex_coord.y = 0.f;
-    s_card_verts[2].tex_coord.y = 1.f;
-    s_card_verts[3].tex_coord.y = 1.f;
 }
 
 SDL_AppResult game_Init()
 {
-    s_configure_card(200.f, 200.f, 0.f);
-    for (int i = 0; i < s_card_verts_len; i++) {
-        s_card_verts[i].color.r = 0xFF;
-        s_card_verts[i].color.g = 0xFF;
-        s_card_verts[i].color.b = 0xFF;
-        s_card_verts[i].color.a = 0xFF;
-    }
-
     nate_ByteBuffer tmp_text = nate_ByteBuffer0;
     nate_ByteBuffer tmp_card = nate_ByteBuffer0;
     nate_MemoryOf3rd mem3rd = nate_MemoryOf3rd0;
@@ -74,7 +84,7 @@ SDL_AppResult game_Init()
         surface_text = nate_Text_Render_Sized("Le card", &tmp_text, 120.f);
         if (!surface_text)
             break;
-        SDL_FlipSurface(surface_text, SDL_FLIP_VERTICAL);
+        // SDL_FlipSurface(surface_text, SDL_FLIP_VERTICAL);
         if (!nate_Load_File("Card.png", &tmp_card))
             break;
         surface_card = nate_Load_Image(&tmp_card, &mem3rd);
@@ -118,14 +128,16 @@ static bool s_mouse_over_card()
 }
 
 static uint64_t card_animation = 0ull;
-#define max_sum 1000000000ull
+#define max_sum 500000000ull
 
 extern SDL_AppResult game_Iterate(Uint64 ticks)
 {
+    game_Card card = game_Card0;
     if (s_mouse_over_card()) {
-        card_animation += ticks;
+        card_animation += ticks * 2;
         if (card_animation > max_sum)
             card_animation = max_sum;
+        card.highlight = 1.f;
     } else if (card_animation < ticks) {
         card_animation = 0ull;
     } else {
@@ -133,8 +145,11 @@ extern SDL_AppResult game_Iterate(Uint64 ticks)
     }
     
     float progress = (float)card_animation / (float)max_sum;
-    s_configure_card(200.f, 200.f, progress);
-    s_draw_card();
+    card.scale *= 1.f + progress * 0.3f;
+    card.x = 200.f;
+    card.y = 200.f;
+    card.rotation = progress;
+    s_draw_card(&card);
     return SDL_APP_CONTINUE;
 }
 
